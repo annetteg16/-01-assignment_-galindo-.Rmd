@@ -1,0 +1,22 @@
+
+## 1. A sentence that says “Hello, World”
+
+print("hello,world")
+
+
+
+```{r filter_select_arrange}
+## 2. Average test scores and admission rate for Florida International University 
+
+sc%>%filter(instnm=="Florida International University")
+
+sc%>%filter(instnm=="Florida International University")%>%select(instnm,adm_rate,sat_avg )
+```
+
+
+
+
+
+
+
+
