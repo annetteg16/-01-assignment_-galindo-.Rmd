@@ -1,0 +1,110 @@
+---
+title: "02_Assignment_Galindo"
+author: "Annette Galindo"
+date: "5/22/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r  include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(plotly)
+library(Metrics)
+``` 
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Dataset for this week
+We will be working with a dataset put together by the Census Bureau that summarizes the characteristics of the 3,088 counties in the United States. 
+
+```{r data}
+load("pd.Rdata")
+```
+
+The codebook for this dataset is stored as another dataset, `labels_explain`. The first column in this dataset is variable names, the second column is a full explanation of that variable. 
+
+```{r explain_date}
+
+## Full explanation of data in codebook
+load("pd_lab_explain.Rdata")
+
+#or use View
+View(lab_explain)
+```
+
+## Question 1. Calculate the mean of the outcome.  In this section I will calculate the mean of homeownership rate.
+
+```{r}
+##Conditional Average 
+pd%>%summarize(mean_homeown_rate=mean(homeown_rate,na.rm=TRUE))
+```
+
+## Question 2: Use your mean as a prediction: Create a new variable that consists of the mean of the outcome. Here I will create a new variable which is the mean_homeownership rate. This rate will be used as a predictor of homeownership rate by each county.  
+
+```{r}
+##Conditional Average as a Predictor of Homeownership
+pd<-pd%>%mutate(mean_homeown_rate=mean(homeown_rate,na.rm=TRUE))
+```
+
+## Question 3: Calculate a summary measure of the errors for each observation-the differene between your prediction and the outcome. In this section, the root mean square error (RMSE) is calculated. This will be used to calculate the difference between the actual observation and the mean calculated for homeownership.
+
+```{r error_terms}
+## Create new column to indicate the difference between prediction and the outcome
+pd<-pd%>%mutate(e1=mean_homeown_rate-homeown_rate)
+```
+
+```{r}
+## RMSE
+rmse_cond_mean<-rmse(pd$homeown_rate,pd$mean_homeown_rate)
+rmse_cond_mean
+```
+
+## Question 4: Calculate the mean of the outcome at levels of a predictor variable.  In this section we divide all counties into quartiles based on percentage of hispanic residents.
+
+```{r}
+## Create a variable for quartiles of hispanics residence
+pd<-pd%>%mutate(hispanic_pc_level=ntile(hispanic_pc,4))
+table(pd$hispanic_pc_level)
+```
+
+## Question 5: Use these conditional means as a prediction: for every county, use the conditional mean to provide a "best guess" as to that county's level of the outcome.  This section will predict the homeowership of hispanic.
+
+```{r condtl_mean_single}
+##Condtional Average across a single variable
+
+## Use the conditional mean to provide a "best guess" as to that county's level of the outcome.
+pd<-pd%>%group_by(hispanic_pc_level)%>% ## Group by predictor
+  ##Calculate mean at each level of predictor
+  mutate(pred_hispanic_homeown_rate=mean(homeown_rate))%>% 
+  ## Ungroup
+  ungroup()%>% 
+  #Rank by prediction, with ties sorted randomly
+  mutate(pred_hispanic_homeown_rate=rank(pred_hispanic_homeown_rate,ties.method="random"))
+```
+
+## Question 6:  Calculate a summary measure of the error in your predictions.
+
+```{r}
+## Calculating r squared summary measure of the error in predictions
+rmse_cond_mean_one<-rmse(pd$homeown_rate,pd$pred_hispanic_homeown_rate)
+rmse_cond_mean_one
+```
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
